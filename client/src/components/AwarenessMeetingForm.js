@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import withDashboardButton from './withDashboardButton';
 import '../styles/forms.css';
 
-const AwarenessMeetingForm = () => {
+const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
     const initialFormData = {
         serialNo: '',
         dateOfProgram: '',
@@ -74,6 +75,9 @@ const AwarenessMeetingForm = () => {
                 
                 // Reset form
                 setFormData(initialFormData);
+                
+                // Call onSubmitSuccess to show the dashboard button
+                onSubmitSuccess();
             } catch (error) {
                 // Show error message
                 setSubmitStatus({
@@ -84,6 +88,13 @@ const AwarenessMeetingForm = () => {
         } else {
             setErrors(newErrors);
         }
+    };
+
+    const handleClear = () => {
+        setFormData(initialFormData);
+        setErrors({});
+        setSubmitStatus({ type: '', message: '' });
+        onReset();
     };
 
     return (
@@ -183,7 +194,7 @@ const AwarenessMeetingForm = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="submit-button">Submit</button>
-                    <button type="button" className="cancel-button" onClick={() => setFormData(initialFormData)}>
+                    <button type="button" className="cancel-button" onClick={handleClear}>
                         Clear
                     </button>
                 </div>
@@ -192,4 +203,4 @@ const AwarenessMeetingForm = () => {
     );
 };
 
-export default AwarenessMeetingForm; 
+export default withDashboardButton(AwarenessMeetingForm); 

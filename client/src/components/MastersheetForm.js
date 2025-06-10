@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/forms.css';
 
-const MastersheetForm = () => {
+const MastersheetForm = ({ onSubmitSuccess, onReset }) => {
   const initialFormData = {
     // Personal Information
     name: '',
@@ -40,6 +40,7 @@ const MastersheetForm = () => {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
+  const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -49,6 +50,10 @@ const MastersheetForm = () => {
     }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+    // Clear submit status when user starts typing
+    if (submitStatus.message) {
+      setSubmitStatus({ type: '', message: '' });
     }
   };
 
@@ -78,14 +83,59 @@ const MastersheetForm = () => {
   const handleSubmit = (event) => {
     event.preventDefault();
     if (validateForm()) {
-      console.log('Form submitted:', formData);
-      // Add your submission logic here
+      try {
+        // Get existing mastersheet forms from localStorage
+        const existingForms = JSON.parse(localStorage.getItem('mastersheetForms') || '[]');
+        
+        // Add timestamp and ID to the form data
+        const formToSave = {
+          ...formData,
+          submittedAt: new Date().toISOString(),
+          id: Date.now().toString()
+        };
+        
+        // Add new form to the array
+        existingForms.push(formToSave);
+        
+        // Save back to localStorage
+        localStorage.setItem('mastersheetForms', JSON.stringify(existingForms));
+        
+        // Show success message
+        setSubmitStatus({
+          type: 'success',
+          message: 'Form submitted successfully!'
+        });
+        
+        // Reset form
+        setFormData(initialFormData);
+        
+        // Call onSubmitSuccess to show the dashboard button
+        onSubmitSuccess();
+      } catch (error) {
+        setSubmitStatus({
+          type: 'error',
+          message: 'Failed to submit form. Please try again.'
+        });
+      }
     }
+  };
+
+  const handleClear = () => {
+    setFormData(initialFormData);
+    setErrors({});
+    setSubmitStatus({ type: '', message: '' });
+    onReset();
   };
 
   return (
     <div className="form-container">
       <h2>Mastersheet Form</h2>
+      
+      {submitStatus.message && (
+        <div className={`submit-status ${submitStatus.type}`}>
+          {submitStatus.message}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="form">
         <div className="form-section">
@@ -383,9 +433,12 @@ const MastersheetForm = () => {
           </div>
         </div>
 
-        <div className="button-group">
+        <div className="form-actions">
           <button type="submit" className="submit-button">
             Submit
+          </button>
+          <button type="button" className="cancel-button" onClick={handleClear}>
+            Clear
           </button>
         </div>
       </form>

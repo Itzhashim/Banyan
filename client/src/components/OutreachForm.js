@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/forms.css';
 
-const OutreachForm = () => {
+const OutreachForm = ({ onSubmitSuccess, onReset }) => {
   const initialFormData = {
     sno: '',
     district: '',
@@ -61,8 +61,8 @@ const OutreachForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (validateForm()) {
       try {
         // Get existing outreach forms from localStorage
@@ -89,6 +89,9 @@ const OutreachForm = () => {
         
         // Reset form
         setFormData(initialFormData);
+        
+        // Call onSubmitSuccess to show the dashboard button
+        onSubmitSuccess();
       } catch (error) {
         // Show error message
         setSubmitStatus({
@@ -97,6 +100,13 @@ const OutreachForm = () => {
         });
       }
     }
+  };
+
+  const handleClear = () => {
+    setFormData(initialFormData);
+    setErrors({});
+    setSubmitStatus({ type: '', message: '' });
+    onReset();
   };
 
   return (
@@ -339,9 +349,10 @@ const OutreachForm = () => {
           </div>
         </div>
 
-        <div className="button-group">
-          <button type="submit" className="submit-button">
-            Submit
+        <div className="form-actions">
+          <button type="submit" className="submit-button">Submit</button>
+          <button type="button" className="cancel-button" onClick={handleClear}>
+            Clear
           </button>
         </div>
       </form>

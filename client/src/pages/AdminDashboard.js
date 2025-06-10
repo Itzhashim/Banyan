@@ -12,7 +12,8 @@ const AdminDashboard = () => {
         reintegration: 0,
         transactions: 0,
         awareness: 0,
-        hospital: 0
+        hospital: 0,
+        mastersheet: 0
     });
     const [formData, setFormData] = useState([]);
 
@@ -36,13 +37,15 @@ const AdminDashboard = () => {
             const transactionForms = JSON.parse(localStorage.getItem('transactionForms') || '[]');
             const awarenessForms = JSON.parse(localStorage.getItem('awarenessMeetingForms') || '[]');
             const hospitalForms = JSON.parse(localStorage.getItem('hospitalVisitForms') || '[]');
+            const mastersheetForms = JSON.parse(localStorage.getItem('mastersheetForms') || '[]');
 
             setStats({
                 outreach: outreachForms.length,
                 reintegration: reintegrationForms.length,
                 transactions: transactionForms.length,
                 awareness: awarenessForms.length,
-                hospital: hospitalForms.length
+                hospital: hospitalForms.length,
+                mastersheet: mastersheetForms.length
             });
         };
 
@@ -71,6 +74,9 @@ const AdminDashboard = () => {
                         break;
                     case 'hospital':
                         data = JSON.parse(localStorage.getItem('hospitalVisitForms') || '[]');
+                        break;
+                    case 'mastersheet':
+                        data = JSON.parse(localStorage.getItem('mastersheetForms') || '[]');
                         break;
                     default:
                         data = [];
@@ -112,6 +118,11 @@ const AdminDashboard = () => {
                 <div className="stat-number">{stats.hospital}</div>
                 <p>Total submissions</p>
             </div>
+            <div className="stat-card" onClick={() => setActiveTab('mastersheet')}>
+                <h3>Mastersheet Forms</h3>
+                <div className="stat-number">{stats.mastersheet}</div>
+                <p>Total submissions</p>
+            </div>
         </div>
     );
 
@@ -120,7 +131,9 @@ const AdminDashboard = () => {
             return <p className="no-data">No data available</p>;
         }
 
-        const headers = Object.keys(formData[0]).filter(key => key !== 'id');
+        // Define columns to exclude
+        const excludeColumns = ['id', 'reasonForVisit'];
+        const headers = Object.keys(formData[0]).filter(key => !excludeColumns.includes(key));
 
         return (
             <div className="table-container">
@@ -199,6 +212,12 @@ const AdminDashboard = () => {
                         onClick={() => setActiveTab('hospital')}
                     >
                         Hospital Visit Forms
+                    </button>
+                    <button
+                        className={`tab-button ${activeTab === 'mastersheet' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('mastersheet')}
+                    >
+                        Mastersheet Forms
                     </button>
                 </div>
 

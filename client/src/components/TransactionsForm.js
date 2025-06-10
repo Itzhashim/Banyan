@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/forms.css';
 
-const TransactionsForm = () => {
+const TransactionsForm = ({ onSubmitSuccess, onReset }) => {
   const initialFormData = {
     fileNo: '',
     name: '',
@@ -64,8 +64,8 @@ const TransactionsForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (validateForm()) {
       try {
         // Get existing transaction forms from localStorage
@@ -92,6 +92,9 @@ const TransactionsForm = () => {
         
         // Reset form
         setFormData(initialFormData);
+        
+        // Call onSubmitSuccess to show the dashboard button
+        onSubmitSuccess();
       } catch (error) {
         // Show error message
         setSubmitStatus({
@@ -100,6 +103,13 @@ const TransactionsForm = () => {
         });
       }
     }
+  };
+
+  const handleClear = () => {
+    setFormData(initialFormData);
+    setErrors({});
+    setSubmitStatus({ type: '', message: '' });
+    onReset();
   };
 
   return (
@@ -195,9 +205,10 @@ const TransactionsForm = () => {
           </div>
         </div>
 
-        <div className="form-row">
-          <button type="submit" className="submit-button">
-            Submit
+        <div className="form-actions">
+          <button type="submit" className="submit-button">Submit</button>
+          <button type="button" className="cancel-button" onClick={handleClear}>
+            Clear
           </button>
         </div>
       </form>

@@ -96,6 +96,21 @@ const HospitalVisitsForm = ({
             </div>
 
             <div className="form-group">
+                <label htmlFor="dateOfDischarge">Date of Discharge</label>
+                <input
+                    type="date"
+                    id="dateOfDischarge"
+                    name="dateOfDischarge"
+                    value={values.dateOfDischarge}
+                    onChange={handleChange}
+                    className={errors.dateOfDischarge ? 'error' : ''}
+                />
+                {errors.dateOfDischarge && (
+                    <span className="error-message">{errors.dateOfDischarge}</span>
+                )}
+            </div>
+
+            <div className="form-group">
                 <label htmlFor="reason">Reason for Visit *</label>
                 <textarea
                     id="reason"

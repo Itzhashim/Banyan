@@ -31,6 +31,7 @@ const HospitalVisitsPage = () => {
             }
         },
         dateOfVisit: validationRules.date,
+        dateOfDischarge: validationRules.date,
         reason: {
             required: 'Reason is required',
             minLength: {
@@ -59,6 +60,7 @@ const HospitalVisitsPage = () => {
         typeOfVisit: 'IP',
         hospitalName: '',
         dateOfVisit: '',
+        dateOfDischarge: '',
         reason: '',
         costToOrganization: '',
         location: '',

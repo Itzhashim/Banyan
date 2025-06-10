@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import HospitalVisitsForm from './HospitalVisitsForm';
 
 const HospitalVisitsFormContainer = () => {
+    const navigate = useNavigate();
     const initialFormData = {
         fileNumber: '',
         name: '',
         typeOfVisit: 'IP',
         dateOfVisit: '',
-        reasonForVisit: '',
+        dateOfDischarge: '',
+        reason: '',
         costToOrganization: '',
         location: '',
         residingPlace: ''
@@ -16,6 +19,7 @@ const HospitalVisitsFormContainer = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+    const [showDashboardButton, setShowDashboardButton] = useState(false);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -81,6 +85,11 @@ const HospitalVisitsFormContainer = () => {
                 
                 // Reset form
                 setFormData(initialFormData);
+
+                // Add a slight delay before showing the button to ensure the success message is seen
+                setTimeout(() => {
+                    setShowDashboardButton(true);
+                }, 500);
             } catch (error) {
                 // Show error message
                 setSubmitStatus({
@@ -95,17 +104,34 @@ const HospitalVisitsFormContainer = () => {
         setFormData(initialFormData);
         setErrors({});
         setSubmitStatus({ type: '', message: '' });
+        setShowDashboardButton(false);
+    };
+
+    const handleDashboardNavigation = () => {
+        navigate('/dashboard');
     };
 
     return (
-        <HospitalVisitsForm
-            values={formData}
-            errors={errors}
-            handleChange={handleChange}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            submitStatus={submitStatus}
-        />
+        <div>
+            <HospitalVisitsForm
+                values={formData}
+                errors={errors}
+                handleChange={handleChange}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                submitStatus={submitStatus}
+            />
+            {showDashboardButton && (
+                <div className="dashboard-button-container">
+                    <button
+                        onClick={handleDashboardNavigation}
+                        className="dashboard-button"
+                    >
+                        Return to Dashboard
+                    </button>
+                </div>
+            )}
+        </div>
     );
 };
 

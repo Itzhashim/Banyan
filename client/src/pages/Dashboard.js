@@ -42,6 +42,12 @@ const Dashboard = () => {
             description: 'Track hospital visits and medical care',
             path: '/hospital-visits',
             icon: '🏥'
+        },
+        {
+            title: 'Mastersheet Form',
+            description: 'Comprehensive client information and tracking',
+            path: '/mastersheet',
+            icon: '📋'
         }
     ];
 

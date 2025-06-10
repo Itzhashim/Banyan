@@ -10,6 +10,16 @@ import ReintegrationForm from './components/ReintegrationForm';
 import TransactionsForm from './components/TransactionsForm';
 import AwarenessMeetingForm from './components/AwarenessMeetingForm';
 import HospitalVisitsFormContainer from './components/HospitalVisitsFormContainer';
+import MastersheetForm from './components/MastersheetForm';
+import withDashboardButton from './components/withDashboardButton';
+
+// Wrap forms with dashboard button
+const OutreachFormWithDashboard = withDashboardButton(OutreachForm);
+const ReintegrationFormWithDashboard = withDashboardButton(ReintegrationForm);
+const TransactionsFormWithDashboard = withDashboardButton(TransactionsForm);
+// AwarenessMeetingForm is already wrapped in its own file
+const HospitalVisitsFormWithDashboard = withDashboardButton(HospitalVisitsFormContainer);
+const MastersheetFormWithDashboard = withDashboardButton(MastersheetForm);
 
 // Protected Route Component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -48,19 +58,19 @@ const App = () => {
 
                     <Route path="/outreach" element={
                         <ProtectedRoute>
-                            <OutreachForm />
+                            <OutreachFormWithDashboard />
                         </ProtectedRoute>
                     } />
 
                     <Route path="/reintegration" element={
                         <ProtectedRoute>
-                            <ReintegrationForm />
+                            <ReintegrationFormWithDashboard />
                         </ProtectedRoute>
                     } />
 
                     <Route path="/transactions" element={
                         <ProtectedRoute>
-                            <TransactionsForm />
+                            <TransactionsFormWithDashboard />
                         </ProtectedRoute>
                     } />
 
@@ -72,11 +82,17 @@ const App = () => {
 
                     <Route path="/hospital-visits" element={
                         <ProtectedRoute>
-                            <HospitalVisitsFormContainer />
+                            <HospitalVisitsFormWithDashboard />
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/" element={<Navigate to="/dashboard" />} />
+                    <Route path="/mastersheet" element={
+                        <ProtectedRoute>
+                            <MastersheetFormWithDashboard />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/" element={<Navigate to="/login" />} />
                 </Routes>
             </Router>
         </AuthProvider>

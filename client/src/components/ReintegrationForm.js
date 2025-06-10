@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/forms.css';
 
-const ReintegrationForm = () => {
+const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
   const initialFormData = {
     sno: '',
     district: '',
@@ -62,8 +62,8 @@ const ReintegrationForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (validateForm()) {
       try {
         // Get existing reintegration forms from localStorage
@@ -90,6 +90,9 @@ const ReintegrationForm = () => {
         
         // Reset form
         setFormData(initialFormData);
+        
+        // Call onSubmitSuccess to show the dashboard button
+        onSubmitSuccess();
       } catch (error) {
         // Show error message
         setSubmitStatus({
@@ -98,6 +101,13 @@ const ReintegrationForm = () => {
         });
       }
     }
+  };
+
+  const handleClear = () => {
+    setFormData(initialFormData);
+    setErrors({});
+    setSubmitStatus({ type: '', message: '' });
+    onReset();
   };
 
   return (
@@ -332,9 +342,10 @@ const ReintegrationForm = () => {
           </div>
         </div>
 
-        <div className="button-group">
-          <button type="submit" className="submit-button">
-            Submit
+        <div className="form-actions">
+          <button type="submit" className="submit-button">Submit</button>
+          <button type="button" className="cancel-button" onClick={handleClear}>
+            Clear
           </button>
         </div>
       </form>
