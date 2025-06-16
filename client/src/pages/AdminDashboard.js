@@ -1,165 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import '../styles/forms.css';
+import { FACILITIES, getFacilityDisplayName } from '../constants/facilities';
+import '../styles/admin-dashboard.css';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
-    const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('overview');
-    const [stats, setStats] = useState({
-        outreach: 0,
-        reintegration: 0,
-        transactions: 0,
-        awareness: 0,
-        hospital: 0,
-        mastersheet: 0
-    });
-    const [formData, setFormData] = useState([]);
+    const [selectedFacility, setSelectedFacility] = useState(null);
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
     };
 
-    // Redirect if not admin
-    useEffect(() => {
-        if (!user || user.role !== 'admin') {
-            navigate('/dashboard');
-        }
-    }, [user, navigate]);
-
-    // Load statistics
-    useEffect(() => {
-        const loadStats = () => {
-            const outreachForms = JSON.parse(localStorage.getItem('outreachForms') || '[]');
-            const reintegrationForms = JSON.parse(localStorage.getItem('reintegrationForms') || '[]');
-            const transactionForms = JSON.parse(localStorage.getItem('transactionForms') || '[]');
-            const awarenessForms = JSON.parse(localStorage.getItem('awarenessMeetingForms') || '[]');
-            const hospitalForms = JSON.parse(localStorage.getItem('hospitalVisitForms') || '[]');
-            const mastersheetForms = JSON.parse(localStorage.getItem('mastersheetForms') || '[]');
-
-            setStats({
-                outreach: outreachForms.length,
-                reintegration: reintegrationForms.length,
-                transactions: transactionForms.length,
-                awareness: awarenessForms.length,
-                hospital: hospitalForms.length,
-                mastersheet: mastersheetForms.length
-            });
-        };
-
-        loadStats();
-    }, []);
-
-    // Load form data based on active tab
-    useEffect(() => {
-        if (activeTab === 'overview') return;
-
-        const loadData = () => {
-            try {
-                let data = [];
-                switch (activeTab) {
-                    case 'outreach':
-                        data = JSON.parse(localStorage.getItem('outreachForms') || '[]');
-                        break;
-                    case 'reintegration':
-                        data = JSON.parse(localStorage.getItem('reintegrationForms') || '[]');
-                        break;
-                    case 'transactions':
-                        data = JSON.parse(localStorage.getItem('transactionForms') || '[]');
-                        break;
-                    case 'awareness':
-                        data = JSON.parse(localStorage.getItem('awarenessMeetingForms') || '[]');
-                        break;
-                    case 'hospital':
-                        data = JSON.parse(localStorage.getItem('hospitalVisitForms') || '[]');
-                        break;
-                    case 'mastersheet':
-                        data = JSON.parse(localStorage.getItem('mastersheetForms') || '[]');
-                        break;
-                    default:
-                        data = [];
-                }
-                setFormData(data);
-            } catch (error) {
-                console.error('Error loading data:', error);
-                setFormData([]);
-            }
-        };
-
-        loadData();
-    }, [activeTab]);
-
-    const renderOverview = () => (
-        <div className="stats-grid">
-            <div className="stat-card" onClick={() => setActiveTab('outreach')}>
-                <h3>Outreach Forms</h3>
-                <div className="stat-number">{stats.outreach}</div>
-                <p>Total submissions</p>
-            </div>
-            <div className="stat-card" onClick={() => setActiveTab('reintegration')}>
-                <h3>Reintegration Forms</h3>
-                <div className="stat-number">{stats.reintegration}</div>
-                <p>Total submissions</p>
-            </div>
-            <div className="stat-card" onClick={() => setActiveTab('transactions')}>
-                <h3>Transaction Forms</h3>
-                <div className="stat-number">{stats.transactions}</div>
-                <p>Total submissions</p>
-            </div>
-            <div className="stat-card" onClick={() => setActiveTab('awareness')}>
-                <h3>Awareness Forms</h3>
-                <div className="stat-number">{stats.awareness}</div>
-                <p>Total submissions</p>
-            </div>
-            <div className="stat-card" onClick={() => setActiveTab('hospital')}>
-                <h3>Hospital Visit Forms</h3>
-                <div className="stat-number">{stats.hospital}</div>
-                <p>Total submissions</p>
-            </div>
-            <div className="stat-card" onClick={() => setActiveTab('mastersheet')}>
-                <h3>Mastersheet Forms</h3>
-                <div className="stat-number">{stats.mastersheet}</div>
-                <p>Total submissions</p>
-            </div>
-        </div>
-    );
-
-    const renderTable = () => {
-        if (formData.length === 0) {
-            return <p className="no-data">No data available</p>;
-        }
-
-        // Define columns to exclude
-        const excludeColumns = ['id', 'reasonForVisit'];
-        const headers = Object.keys(formData[0]).filter(key => !excludeColumns.includes(key));
-
-        return (
-            <div className="table-container">
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            {headers.map(header => (
-                                <th key={header}>
-                                    {header.charAt(0).toUpperCase() + header.slice(1).replace(/([A-Z])/g, ' $1')}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {formData.map((item, index) => (
-                            <tr key={item.id || index}>
-                                {headers.map(header => (
-                                    <td key={header}>{item[header]}</td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
+    const handleFacilitySelect = (facility) => {
+        setSelectedFacility(facility);
     };
+
+    const forms = [
+        { name: 'Outreach Form', path: '/outreach' },
+        { name: 'Reintegration Form', path: '/reintegration' },
+        { name: 'Transactions Form', path: '/transactions' },
+        { name: 'Awareness Meeting Form', path: '/awareness' },
+        { name: 'Hospital Visits Form', path: '/hospital-visits' },
+        { name: 'Mastersheet Form', path: '/mastersheet' }
+    ];
 
     return (
         <div className="admin-dashboard">
@@ -175,56 +38,35 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            <div className="tab-container">
-                <div className="tabs">
+            <div className="facilities-grid">
+                {FACILITIES.map((facility) => (
                     <button
-                        className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('overview')}
+                        key={facility}
+                        className={`facility-button ${selectedFacility === facility ? 'selected' : ''}`}
+                        onClick={() => handleFacilitySelect(facility)}
                     >
-                        Overview
+                        {getFacilityDisplayName(facility)}
                     </button>
-                    <button
-                        className={`tab-button ${activeTab === 'outreach' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('outreach')}
-                    >
-                        Outreach Forms
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'reintegration' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('reintegration')}
-                    >
-                        Reintegration Forms
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'transactions' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('transactions')}
-                    >
-                        Transaction Forms
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'awareness' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('awareness')}
-                    >
-                        Awareness Forms
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'hospital' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('hospital')}
-                    >
-                        Hospital Visit Forms
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'mastersheet' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('mastersheet')}
-                    >
-                        Mastersheet Forms
-                    </button>
-                </div>
-
-                <div className="tab-content">
-                    {activeTab === 'overview' ? renderOverview() : renderTable()}
-                </div>
+                ))}
             </div>
+
+            {selectedFacility && (
+                <div className="facility-dashboard">
+                    <h2>{getFacilityDisplayName(selectedFacility)} Facility Forms</h2>
+                    <div className="forms-grid">
+                        {forms.map((form, index) => (
+                            <a 
+                                key={index} 
+                                href={`${form.path}?facility=${selectedFacility}`}
+                                className="form-card"
+                            >
+                                <h3>{form.name}</h3>
+                                <p>View {form.name} for {getFacilityDisplayName(selectedFacility)}</p>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FACILITIES, getFacilityDisplayName } from '../constants/facilities';
 import '../styles/forms.css';
 
 const Register = () => {
@@ -23,6 +24,11 @@ const Register = () => {
 
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
+            return;
+        }
+
+        if (!formData.facility) {
+            setError('Please select a facility');
             return;
         }
 
@@ -87,15 +93,20 @@ const Register = () => {
 
                     <div className="form-group">
                         <label htmlFor="facility">Facility</label>
-                        <input
-                            type="text"
+                        <select
                             id="facility"
                             name="facility"
                             value={formData.facility}
                             onChange={handleChange}
-                            placeholder="Enter your facility name"
                             required
-                        />
+                        >
+                            <option value="">Select a facility</option>
+                            {FACILITIES.map(facility => (
+                                <option key={facility} value={facility}>
+                                    {getFacilityDisplayName(facility)}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="form-group">
