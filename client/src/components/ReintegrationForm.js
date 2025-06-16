@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { reintegrationService } from '../services/api';
 import '../styles/forms.css';
 
 const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
+  const { user } = useAuth();
   const initialFormData = {
     sno: '',
     district: '',
@@ -18,12 +21,14 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
     reintegratedToDistrict: '',
     acStatus: '',
     reasons: '',
-    treatmentOption: ''
+    treatmentOption: '',
+    facility: user?.facility || ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -65,40 +70,26 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setIsSubmitting(true);
       try {
-        // Get existing reintegration forms from localStorage
-        const existingForms = JSON.parse(localStorage.getItem('reintegrationForms') || '[]');
+        await reintegrationService.submitForm(formData);
         
-        // Add timestamp to the form data
-        const formToSave = {
-          ...formData,
-          submittedAt: new Date().toISOString(),
-          id: Date.now().toString() // Simple unique ID
-        };
-        
-        // Add new form to the array
-        existingForms.push(formToSave);
-        
-        // Save back to localStorage
-        localStorage.setItem('reintegrationForms', JSON.stringify(existingForms));
-        
-        // Show success message
         setSubmitStatus({
           type: 'success',
           message: 'Form submitted successfully!'
         });
         
-        // Reset form
         setFormData(initialFormData);
         
         // Call onSubmitSuccess to show the dashboard button
         onSubmitSuccess();
       } catch (error) {
-        // Show error message
         setSubmitStatus({
           type: 'error',
-          message: 'Failed to submit form. Please try again.'
+          message: error.response?.data?.message || 'Failed to submit form. Please try again.'
         });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -133,6 +124,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.sno}
                 onChange={handleChange}
                 className={errors.sno ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.sno && <span className="error-message">{errors.sno}</span>}
             </div>
@@ -146,6 +138,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.district}
                 onChange={handleChange}
                 className={errors.district ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.district && <span className="error-message">{errors.district}</span>}
             </div>
@@ -159,6 +152,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.fileno}
                 onChange={handleChange}
                 className={errors.fileno ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.fileno && <span className="error-message">{errors.fileno}</span>}
             </div>
@@ -177,6 +171,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.name}
                 onChange={handleChange}
                 className={errors.name ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
@@ -189,6 +184,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.gender}
                 onChange={handleChange}
                 className={errors.gender ? 'error' : ''}
+                disabled={isSubmitting}
               >
                 <option value="">Select gender</option>
                 <option value="Male">Male</option>
@@ -210,6 +206,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="dateOfAdmission"
                 value={formData.dateOfAdmission}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -221,6 +218,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="dateOfReintegration"
                 value={formData.dateOfReintegration}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -233,6 +231,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.daysOfStay}
                 onChange={handleChange}
                 min="0"
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -245,6 +244,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="reintegratedWith"
                 value={formData.reintegratedWith}
                 onChange={handleChange}
+                disabled={isSubmitting}
               >
                 <option value="">Select option</option>
                 <option value="Family">Family</option>
@@ -260,6 +260,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -277,6 +278,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.contact}
                 onChange={handleChange}
                 className={errors.contact ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.contact && <span className="error-message">{errors.contact}</span>}
             </div>
@@ -289,6 +291,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="state"
                 value={formData.state}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -300,6 +303,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="reintegratedToDistrict"
                 value={formData.reintegratedToDistrict}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -312,6 +316,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="acStatus"
                 value={formData.acStatus}
                 onChange={handleChange}
+                disabled={isSubmitting}
               >
                 <option value="">Select status</option>
                 <option value="Active">Active</option>
@@ -326,6 +331,7 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="reasons"
                 value={formData.reasons}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -337,13 +343,20 @@ const ReintegrationForm = ({ onSubmitSuccess, onReset }) => {
                 name="treatmentOption"
                 value={formData.treatmentOption}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="submit-button">Submit</button>
+          <button 
+            type="submit" 
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </button>
           <button type="button" className="cancel-button" onClick={handleClear}>
             Clear
           </button>

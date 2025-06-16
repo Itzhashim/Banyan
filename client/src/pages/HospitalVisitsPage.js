@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import HospitalVisitsFormContainer from '../components/HospitalVisitsFormContainer';
+import HospitalVisitsForm from '../components/HospitalVisitsForm';
 import TableFilters from '../components/TableFilters';
 import { useFormValidation, validationRules } from '../hooks/useFormValidation';
 import '../styles/pages.css';
@@ -196,16 +196,7 @@ const HospitalVisitsPage = () => {
 
             {showForm ? (
                 <div className="form-section">
-                    <HospitalVisitsFormContainer 
-                        values={values}
-                        errors={errors}
-                        handleChange={handleChange}
-                        onSubmit={handleSubmit}
-                        onCancel={() => {
-                            setShowForm(false);
-                            resetForm();
-                        }}
-                    />
+                    <HospitalVisitsForm />
                 </div>
             ) : (
                 <div className="entries-section">

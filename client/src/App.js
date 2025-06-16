@@ -9,7 +9,7 @@ import OutreachForm from './components/OutreachForm';
 import ReintegrationForm from './components/ReintegrationForm';
 import TransactionsForm from './components/TransactionsForm';
 import AwarenessMeetingForm from './components/AwarenessMeetingForm';
-import HospitalVisitsFormContainer from './components/HospitalVisitsFormContainer';
+import HospitalVisitsForm from './components/HospitalVisitsForm';
 import MastersheetForm from './components/MastersheetForm';
 import withDashboardButton from './components/withDashboardButton';
 
@@ -18,7 +18,7 @@ const OutreachFormWithDashboard = withDashboardButton(OutreachForm);
 const ReintegrationFormWithDashboard = withDashboardButton(ReintegrationForm);
 const TransactionsFormWithDashboard = withDashboardButton(TransactionsForm);
 // AwarenessMeetingForm is already wrapped in its own file
-const HospitalVisitsFormWithDashboard = withDashboardButton(HospitalVisitsFormContainer);
+const HospitalVisitsFormWithDashboard = withDashboardButton(HospitalVisitsForm);
 const MastersheetFormWithDashboard = withDashboardButton(MastersheetForm);
 
 // Protected Route Component

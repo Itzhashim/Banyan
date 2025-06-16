@@ -1,39 +1,36 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { transactionsService } from '../services/api';
 import '../styles/forms.css';
 
-const TransactionsForm = ({ onSubmitSuccess, onReset }) => {
+const TransactionsForm = () => {
+  const { user } = useAuth();
   const initialFormData = {
-    fileNo: '',
+    sno: '',
+    date: '',
+    month: '',
+    year: '',
     name: '',
-    typeOfTransaction: '',
-    dateOfExit: null,
-    dateOfReturn: null,
+    age: '',
+    gender: '',
+    amount: '',
+    purpose: '',
+    modeOfPayment: '',
+    status: '',
+    notes: '',
+    facility: user?.facility || '' // Add facility field
   };
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-    // Clear submit status when user starts typing
-    if (submitStatus.message) {
-      setSubmitStatus({ type: '', message: '' });
-    }
-  };
-
-  const handleDateChange = (date, name) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: date
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
     }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
@@ -46,74 +43,52 @@ const TransactionsForm = ({ onSubmitSuccess, onReset }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    // Required field validation
-    if (!formData.fileNo) newErrors.fileNo = 'File number is required';
+    if (!formData.sno) newErrors.sno = 'Serial number is required';
     if (!formData.name) newErrors.name = 'Name is required';
-    if (!formData.typeOfTransaction) newErrors.typeOfTransaction = 'Type of transaction is required';
-    if (!formData.dateOfExit) newErrors.dateOfExit = 'Date of exit is required';
+    if (!formData.amount) newErrors.amount = 'Amount is required';
+    if (!formData.purpose) newErrors.purpose = 'Purpose is required';
+    if (!formData.modeOfPayment) newErrors.modeOfPayment = 'Mode of payment is required';
     
-    // Conditional validation for date of return
-    if (formData.typeOfTransaction === 'Left' && formData.dateOfReturn) {
-      newErrors.dateOfReturn = 'Date of return should not be set for Left status';
+    if (formData.sno && isNaN(formData.sno)) {
+      newErrors.sno = 'Must be a number';
     }
-    if (formData.typeOfTransaction === 'Deceased' && formData.dateOfReturn) {
-      newErrors.dateOfReturn = 'Date of return should not be set for Deceased status';
+    if (formData.age && isNaN(formData.age)) {
+      newErrors.age = 'Must be a number';
+    }
+    if (formData.amount && isNaN(formData.amount)) {
+      newErrors.amount = 'Must be a number';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (validateForm()) {
+      setIsSubmitting(true);
       try {
-        // Get existing transaction forms from localStorage
-        const existingForms = JSON.parse(localStorage.getItem('transactionForms') || '[]');
+        await transactionsService.submitForm(formData);
         
-        // Add timestamp to the form data
-        const formToSave = {
-          ...formData,
-          submittedAt: new Date().toISOString(),
-          id: Date.now().toString() // Simple unique ID
-        };
-        
-        // Add new form to the array
-        existingForms.push(formToSave);
-        
-        // Save back to localStorage
-        localStorage.setItem('transactionForms', JSON.stringify(existingForms));
-        
-        // Show success message
         setSubmitStatus({
           type: 'success',
           message: 'Form submitted successfully!'
         });
         
-        // Reset form
         setFormData(initialFormData);
-        
-        // Call onSubmitSuccess to show the dashboard button
-        onSubmitSuccess();
       } catch (error) {
-        // Show error message
         setSubmitStatus({
           type: 'error',
-          message: 'Failed to submit form. Please try again.'
+          message: error.response?.data?.message || 'Failed to submit form. Please try again.'
         });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
 
-  const handleClear = () => {
-    setFormData(initialFormData);
-    setErrors({});
-    setSubmitStatus({ type: '', message: '' });
-    onReset();
-  };
-
   return (
-    <div className="transactions-form-container">
+    <div className="form-container">
       <h2>Transactions Form</h2>
       
       {submitStatus.message && (
@@ -122,21 +97,68 @@ const TransactionsForm = ({ onSubmitSuccess, onReset }) => {
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="transactions-form">
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="fileNo">File No</label>
-            <input
-              type="text"
-              id="fileNo"
-              name="fileNo"
-              value={formData.fileNo}
-              onChange={handleChange}
-              className={errors.fileNo ? 'error' : ''}
-            />
-            {errors.fileNo && <span className="error-message">{errors.fileNo}</span>}
-          </div>
+      <form onSubmit={handleSubmit} className="form">
+        <div className="form-section">
+          <h3>Basic Information</h3>
+          <div className="form-row">
+            <div className="form-group required-field">
+              <label htmlFor="sno">Serial No.</label>
+              <input
+                type="text"
+                id="sno"
+                name="sno"
+                value={formData.sno}
+                onChange={handleChange}
+                className={errors.sno ? 'error' : ''}
+                disabled={isSubmitting}
+              />
+              {errors.sno && <span className="error-message">{errors.sno}</span>}
+            </div>
 
+            <div className="form-group">
+              <label htmlFor="date">Date</label>
+              <input
+                type="number"
+                id="date"
+                name="date"
+                min="1"
+                max="31"
+                value={formData.date}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="month">Month</label>
+              <input
+                type="number"
+                id="month"
+                name="month"
+                min="1"
+                max="12"
+                value={formData.month}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="year">Year</label>
+              <input
+                type="number"
+                id="year"
+                name="year"
+                min="2000"
+                value={formData.year}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="name">Name</label>
             <input
@@ -146,69 +168,139 @@ const TransactionsForm = ({ onSubmitSuccess, onReset }) => {
               value={formData.name}
               onChange={handleChange}
               className={errors.name ? 'error' : ''}
+              disabled={isSubmitting}
             />
             {errors.name && <span className="error-message">{errors.name}</span>}
           </div>
-        </div>
 
-        <div className="form-row">
           <div className="form-group">
-            <label htmlFor="typeOfTransaction">Type of Transaction</label>
-            <select
-              id="typeOfTransaction"
-              name="typeOfTransaction"
-              value={formData.typeOfTransaction}
+            <label htmlFor="age">Age</label>
+            <input
+              type="text"
+              id="age"
+              name="age"
+              value={formData.age}
               onChange={handleChange}
-              className={errors.typeOfTransaction ? 'error' : ''}
-            >
-              <option value="">Select type</option>
-              <option value="Left">Left</option>
-              <option value="Deceased">Deceased</option>
-              <option value="Readmission">Readmission</option>
-            </select>
-            {errors.typeOfTransaction && (
-              <span className="error-message">{errors.typeOfTransaction}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="dateOfExit">Date of Exit</label>
-            <input
-              type="date"
-              id="dateOfExit"
-              name="dateOfExit"
-              value={formData.dateOfExit || ''}
-              onChange={(e) => handleDateChange(e.target.value, 'dateOfExit')}
-              className={errors.dateOfExit ? 'error' : ''}
+              className={errors.age ? 'error' : ''}
+              disabled={isSubmitting}
             />
-            {errors.dateOfExit && (
-              <span className="error-message">{errors.dateOfExit}</span>
-            )}
+            {errors.age && <span className="error-message">{errors.age}</span>}
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="dateOfReturn">Date of Return (if applicable)</label>
+            <label htmlFor="gender">Gender</label>
             <input
-              type="date"
-              id="dateOfReturn"
-              name="dateOfReturn"
-              value={formData.dateOfReturn || ''}
-              onChange={(e) => handleDateChange(e.target.value, 'dateOfReturn')}
-              disabled={formData.typeOfTransaction === 'Deceased' || formData.typeOfTransaction === 'Left'}
-              className={errors.dateOfReturn ? 'error' : ''}
+              type="text"
+              id="gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              className={errors.gender ? 'error' : ''}
+              disabled={isSubmitting}
             />
-            {errors.dateOfReturn && (
-              <span className="error-message">{errors.dateOfReturn}</span>
-            )}
+            {errors.gender && <span className="error-message">{errors.gender}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="amount">Amount</label>
+            <input
+              type="text"
+              id="amount"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              className={errors.amount ? 'error' : ''}
+              disabled={isSubmitting}
+            />
+            {errors.amount && <span className="error-message">{errors.amount}</span>}
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="submit" className="submit-button">Submit</button>
-          <button type="button" className="cancel-button" onClick={handleClear}>
-            Clear
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="purpose">Purpose</label>
+            <input
+              type="text"
+              id="purpose"
+              name="purpose"
+              value={formData.purpose}
+              onChange={handleChange}
+              className={errors.purpose ? 'error' : ''}
+              disabled={isSubmitting}
+            />
+            {errors.purpose && <span className="error-message">{errors.purpose}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="modeOfPayment">Mode of Payment</label>
+            <input
+              type="text"
+              id="modeOfPayment"
+              name="modeOfPayment"
+              value={formData.modeOfPayment}
+              onChange={handleChange}
+              className={errors.modeOfPayment ? 'error' : ''}
+              disabled={isSubmitting}
+            />
+            {errors.modeOfPayment && <span className="error-message">{errors.modeOfPayment}</span>}
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="status">Status</label>
+            <input
+              type="text"
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className={errors.status ? 'error' : ''}
+              disabled={isSubmitting}
+            />
+            {errors.status && <span className="error-message">{errors.status}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="notes">Notes</label>
+            <input
+              type="text"
+              id="notes"
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              className={errors.notes ? 'error' : ''}
+              disabled={isSubmitting}
+            />
+            {errors.notes && <span className="error-message">{errors.notes}</span>}
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="facility">Facility</label>
+            <input
+              type="text"
+              id="facility"
+              name="facility"
+              value={formData.facility}
+              onChange={handleChange}
+              className={errors.facility ? 'error' : ''}
+              disabled={isSubmitting}
+            />
+            {errors.facility && <span className="error-message">{errors.facility}</span>}
+          </div>
+        </div>
+
+        <div className="button-group">
+          <button 
+            type="submit" 
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Form'}
           </button>
         </div>
       </form>

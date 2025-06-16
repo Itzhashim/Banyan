@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { awarenessMeetingService } from '../services/api';
 import withDashboardButton from './withDashboardButton';
 import '../styles/forms.css';
 
 const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
+    const { user } = useAuth();
     const initialFormData = {
         serialNo: '',
         dateOfProgram: '',
         typeOfProgram: '',
         topic: '',
         resourcePerson: '',
-        numberOfParticipants: ''
+        numberOfParticipants: '',
+        facility: user?.facility || ''
     };
 
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -22,14 +27,12 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
             ...prevData,
             [name]: value
         }));
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
                 [name]: ''
             }));
         }
-        // Clear submit status when user starts typing
         if (submitStatus.message) {
             setSubmitStatus({ type: '', message: '' });
         }
@@ -43,47 +46,32 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
         if (!formData.topic) newErrors.topic = 'Topic is required';
         if (!formData.resourcePerson) newErrors.resourcePerson = 'Resource person is required';
         if (!formData.numberOfParticipants) newErrors.numberOfParticipants = 'Number of participants is required';
+        if (formData.numberOfParticipants && isNaN(formData.numberOfParticipants)) {
+            newErrors.numberOfParticipants = 'Number of participants must be a number';
+        }
         return newErrors;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = validateForm();
         if (Object.keys(newErrors).length === 0) {
+            setIsSubmitting(true);
             try {
-                // Get existing awareness meeting forms from localStorage
-                const existingForms = JSON.parse(localStorage.getItem('awarenessMeetingForms') || '[]');
-                
-                // Add timestamp to the form data
-                const formToSave = {
-                    ...formData,
-                    submittedAt: new Date().toISOString(),
-                    id: Date.now().toString() // Simple unique ID
-                };
-                
-                // Add new form to the array
-                existingForms.push(formToSave);
-                
-                // Save back to localStorage
-                localStorage.setItem('awarenessMeetingForms', JSON.stringify(existingForms));
-                
-                // Show success message
+                await awarenessMeetingService.submitForm(formData);
                 setSubmitStatus({
                     type: 'success',
                     message: 'Form submitted successfully!'
                 });
-                
-                // Reset form
                 setFormData(initialFormData);
-                
-                // Call onSubmitSuccess to show the dashboard button
                 onSubmitSuccess();
             } catch (error) {
-                // Show error message
                 setSubmitStatus({
                     type: 'error',
-                    message: 'Failed to submit form. Please try again.'
+                    message: error.response?.data?.message || 'Failed to submit form. Please try again.'
                 });
+            } finally {
+                setIsSubmitting(false);
             }
         } else {
             setErrors(newErrors);
@@ -118,6 +106,7 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
                             value={formData.serialNo}
                             onChange={handleChange}
                             className={errors.serialNo ? 'error' : ''}
+                            disabled={isSubmitting}
                         />
                         {errors.serialNo && <span className="error-message">{errors.serialNo}</span>}
                     </div>
@@ -131,6 +120,7 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
                             value={formData.dateOfProgram}
                             onChange={handleChange}
                             className={errors.dateOfProgram ? 'error' : ''}
+                            disabled={isSubmitting}
                         />
                         {errors.dateOfProgram && <span className="error-message">{errors.dateOfProgram}</span>}
                     </div>
@@ -143,6 +133,7 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
                             value={formData.typeOfProgram}
                             onChange={handleChange}
                             className={errors.typeOfProgram ? 'error' : ''}
+                            disabled={isSubmitting}
                         >
                             <option value="">Select program type</option>
                             <option value="Awareness program">Awareness program</option>
@@ -161,6 +152,7 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
                             value={formData.topic}
                             onChange={handleChange}
                             className={errors.topic ? 'error' : ''}
+                            disabled={isSubmitting}
                         />
                         {errors.topic && <span className="error-message">{errors.topic}</span>}
                     </div>
@@ -174,6 +166,7 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
                             value={formData.resourcePerson}
                             onChange={handleChange}
                             className={errors.resourcePerson ? 'error' : ''}
+                            disabled={isSubmitting}
                         />
                         {errors.resourcePerson && <span className="error-message">{errors.resourcePerson}</span>}
                     </div>
@@ -187,14 +180,17 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
                             value={formData.numberOfParticipants}
                             onChange={handleChange}
                             className={errors.numberOfParticipants ? 'error' : ''}
+                            disabled={isSubmitting}
                         />
                         {errors.numberOfParticipants && <span className="error-message">{errors.numberOfParticipants}</span>}
                     </div>
                 </div>
 
                 <div className="form-actions">
-                    <button type="submit" className="submit-button">Submit</button>
-                    <button type="button" className="cancel-button" onClick={handleClear}>
+                    <button type="submit" className="submit-button" disabled={isSubmitting}>
+                        {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </button>
+                    <button type="button" className="cancel-button" onClick={handleClear} disabled={isSubmitting}>
                         Clear
                     </button>
                 </div>

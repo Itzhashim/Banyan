@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { outreachService } from '../services/api';
 import '../styles/forms.css';
 
-const OutreachForm = ({ onSubmitSuccess, onReset }) => {
+const OutreachForm = () => {
+  const { user } = useAuth();
   const initialFormData = {
     sno: '',
     district: '',
@@ -18,12 +21,14 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
     category: '',
     tier: '',
     notes: '',
-    doneBy: ''
+    doneBy: '',
+    facility: user?.facility || '' // Add facility field
   };
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -34,7 +39,6 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
-    // Clear submit status when user starts typing
     if (submitStatus.message) {
       setSubmitStatus({ type: '', message: '' });
     }
@@ -43,13 +47,11 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    // Required fields validation
     if (!formData.sno) newErrors.sno = 'Serial number is required';
     if (!formData.district) newErrors.district = 'District is required';
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.gender) newErrors.gender = 'Gender is required';
     
-    // Number validation
     if (formData.sno && isNaN(formData.sno)) {
       newErrors.sno = 'Must be a number';
     }
@@ -61,52 +63,28 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (validateForm()) {
+      setIsSubmitting(true);
       try {
-        // Get existing outreach forms from localStorage
-        const existingForms = JSON.parse(localStorage.getItem('outreachForms') || '[]');
+        await outreachService.submitForm(formData);
         
-        // Add timestamp to the form data
-        const formToSave = {
-          ...formData,
-          submittedAt: new Date().toISOString(),
-          id: Date.now().toString() // Simple unique ID
-        };
-        
-        // Add new form to the array
-        existingForms.push(formToSave);
-        
-        // Save back to localStorage
-        localStorage.setItem('outreachForms', JSON.stringify(existingForms));
-        
-        // Show success message
         setSubmitStatus({
           type: 'success',
           message: 'Form submitted successfully!'
         });
         
-        // Reset form
         setFormData(initialFormData);
-        
-        // Call onSubmitSuccess to show the dashboard button
-        onSubmitSuccess();
       } catch (error) {
-        // Show error message
         setSubmitStatus({
           type: 'error',
-          message: 'Failed to submit form. Please try again.'
+          message: error.response?.data?.message || 'Failed to submit form. Please try again.'
         });
+      } finally {
+        setIsSubmitting(false);
       }
     }
-  };
-
-  const handleClear = () => {
-    setFormData(initialFormData);
-    setErrors({});
-    setSubmitStatus({ type: '', message: '' });
-    onReset();
   };
 
   return (
@@ -124,7 +102,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
           <h3>Basic Information</h3>
           <div className="form-row">
             <div className="form-group required-field">
-              <label htmlFor="sno"></label>
+              <label htmlFor="sno">Serial No.</label>
               <input
                 type="text"
                 id="sno"
@@ -132,6 +110,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.sno}
                 onChange={handleChange}
                 className={errors.sno ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.sno && <span className="error-message">{errors.sno}</span>}
             </div>
@@ -145,6 +124,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.district}
                 onChange={handleChange}
                 className={errors.district ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.district && <span className="error-message">{errors.district}</span>}
             </div>
@@ -161,6 +141,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 max="31"
                 value={formData.date}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -174,6 +155,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 max="12"
                 value={formData.month}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -186,6 +168,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 min="2000"
                 value={formData.year}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -203,6 +186,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.name}
                 onChange={handleChange}
                 className={errors.name ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
@@ -216,6 +200,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.age}
                 onChange={handleChange}
                 className={errors.age ? 'error' : ''}
+                disabled={isSubmitting}
               />
               {errors.age && <span className="error-message">{errors.age}</span>}
             </div>
@@ -230,6 +215,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 value={formData.gender}
                 onChange={handleChange}
                 className={errors.gender ? 'error' : ''}
+                disabled={isSubmitting}
               >
                 <option value="">Select gender</option>
                 <option value="Male">Male</option>
@@ -246,6 +232,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="area"
                 value={formData.area}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -257,6 +244,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="taluk"
                 value={formData.taluk}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -272,6 +260,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="personWithMentalIllness"
                 value={formData.personWithMentalIllness}
                 onChange={handleChange}
+                disabled={isSubmitting}
               >
                 <option value="">Select option</option>
                 <option value="Yes">Yes</option>
@@ -286,6 +275,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
+                disabled={isSubmitting}
               >
                 <option value="">Select category</option>
                 <option value="Crisis Support">Crisis Support</option>
@@ -303,6 +293,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="tier"
                 value={formData.tier}
                 onChange={handleChange}
+                disabled={isSubmitting}
               >
                 <option value="">Select tier</option>
                 <option value="Tier-1">Tier-1</option>
@@ -318,6 +309,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="serviceProvided"
                 value={formData.serviceProvided}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -333,6 +325,7 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -344,15 +337,19 @@ const OutreachForm = ({ onSubmitSuccess, onReset }) => {
                 name="doneBy"
                 value={formData.doneBy}
                 onChange={handleChange}
+                disabled={isSubmitting}
               />
             </div>
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="submit" className="submit-button">Submit</button>
-          <button type="button" className="cancel-button" onClick={handleClear}>
-            Clear
+        <div className="button-group">
+          <button 
+            type="submit" 
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Form'}
           </button>
         </div>
       </form>
