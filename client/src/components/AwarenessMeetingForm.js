@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { awarenessMeetingService } from '../services/api';
+import { awarenessService } from '../services/api';
 import withDashboardButton from './withDashboardButton';
 import '../styles/forms.css';
 
@@ -58,7 +58,7 @@ const AwarenessMeetingForm = ({ onSubmitSuccess, onReset }) => {
         if (Object.keys(newErrors).length === 0) {
             setIsSubmitting(true);
             try {
-                await awarenessMeetingService.submitForm(formData);
+                await awarenessService.submitForm(formData);
                 setSubmitStatus({
                     type: 'success',
                     message: 'Form submitted successfully!'

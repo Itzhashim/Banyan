@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { FACILITIES, getFacilityDisplayName } from '../constants/facilities';
 import '../styles/admin-dashboard.css';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [selectedFacility, setSelectedFacility] = useState(null);
 
     const handleLogout = () => {
@@ -15,13 +17,17 @@ const AdminDashboard = () => {
         setSelectedFacility(facility);
     };
 
+    const handleFormClick = (formType) => {
+        navigate(`/admin/forms/${formType}?facility=${selectedFacility}`);
+    };
+
     const forms = [
-        { name: 'Outreach Form', path: '/outreach' },
-        { name: 'Reintegration Form', path: '/reintegration' },
-        { name: 'Transactions Form', path: '/transactions' },
-        { name: 'Awareness Meeting Form', path: '/awareness' },
-        { name: 'Hospital Visits Form', path: '/hospital-visits' },
-        { name: 'Mastersheet Form', path: '/mastersheet' }
+        { name: 'Outreach Form', type: 'outreach' },
+        { name: 'Reintegration Form', type: 'reintegration' },
+        { name: 'Transactions Form', type: 'transactions' },
+        { name: 'Awareness Meeting Form', type: 'awareness' },
+        { name: 'Hospital Visits Form', type: 'hospital-visits' },
+        { name: 'Mastersheet Form', type: 'mastersheet' }
     ];
 
     return (
@@ -55,14 +61,14 @@ const AdminDashboard = () => {
                     <h2>{getFacilityDisplayName(selectedFacility)} Facility Forms</h2>
                     <div className="forms-grid">
                         {forms.map((form, index) => (
-                            <a 
+                            <button 
                                 key={index} 
-                                href={`${form.path}?facility=${selectedFacility}`}
+                                onClick={() => handleFormClick(form.type)}
                                 className="form-card"
                             >
                                 <h3>{form.name}</h3>
                                 <p>View {form.name} for {getFacilityDisplayName(selectedFacility)}</p>
-                            </a>
+                            </button>
                         ))}
                     </div>
                 </div>

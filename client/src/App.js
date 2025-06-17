@@ -11,6 +11,7 @@ import TransactionsForm from './components/TransactionsForm';
 import AwarenessMeetingForm from './components/AwarenessMeetingForm';
 import HospitalVisitsForm from './components/HospitalVisitsForm';
 import MastersheetForm from './components/MastersheetForm';
+import FormView from './components/FormView';
 import withDashboardButton from './components/withDashboardButton';
 
 // Wrap forms with dashboard button
@@ -53,6 +54,12 @@ const App = () => {
                     <Route path="/admin" element={
                         <ProtectedRoute adminOnly={true}>
                             <AdminDashboard />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/forms/:formType" element={
+                        <ProtectedRoute adminOnly={true}>
+                            <FormView />
                         </ProtectedRoute>
                     } />
 
