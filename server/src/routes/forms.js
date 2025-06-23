@@ -8,6 +8,8 @@ const Reintegration = require('../models/Reintegration');
 const Transaction = require('../models/Transaction');
 const HospitalVisit = require('../models/HospitalVisit');
 const Mastersheet = require('../models/Mastersheet');
+const ExcelJS = require('exceljs');
+const { exportAllFormsToSheet } = require('../utils/exportAllFormsToSheet');
 
 // Validation middleware for all forms
 const commonValidation = [
@@ -38,6 +40,7 @@ router.post('/awareness', protect, [
         };
 
         const awarenessMeeting = await AwarenessMeeting.create(formData);
+        await exportAllFormsToSheet();
         res.status(201).json({
             success: true,
             message: 'Form submitted successfully',
@@ -79,6 +82,7 @@ router.post('/outreach', protect, [
         };
 
         const outreach = await Outreach.create(formData);
+        await exportAllFormsToSheet();
         res.status(201).json({
             success: true,
             message: 'Form submitted successfully',
@@ -121,6 +125,7 @@ router.post('/reintegration', protect, [
         };
 
         const reintegration = await Reintegration.create(formData);
+        await exportAllFormsToSheet();
         res.status(201).json({
             success: true,
             message: 'Form submitted successfully',
@@ -163,6 +168,7 @@ router.post('/transactions', protect, [
         };
 
         const transaction = await Transaction.create(formData);
+        await exportAllFormsToSheet();
         res.status(201).json({
             success: true,
             message: 'Form submitted successfully',
@@ -204,6 +210,7 @@ router.post('/hospital-visits', protect, [
         };
 
         const hospitalVisit = await HospitalVisit.create(formData);
+        await exportAllFormsToSheet();
         res.status(201).json({
             success: true,
             message: 'Form submitted successfully',
@@ -246,6 +253,7 @@ router.post('/mastersheet', protect, [
         };
 
         const mastersheet = await Mastersheet.create(formData);
+        await exportAllFormsToSheet();
         res.status(201).json({
             success: true,
             message: 'Form submitted successfully',
@@ -348,6 +356,137 @@ router.get('/mastersheet', protect, async (req, res) => {
         res.status(200).json({ success: true, data: forms });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to fetch forms' });
+    }
+});
+
+// Export all forms data for a facility as Excel
+router.get('/export/facility/:facilityId', protect, async (req, res) => {
+    try {
+        const { facilityId } = req.params;
+        // Fetch all forms for the facility
+        const [awareness, outreach, reintegration, transactions, hospitalVisits, mastersheet] = await Promise.all([
+            AwarenessMeeting.find({ facility: facilityId }).lean(),
+            Outreach.find({ facility: facilityId }).lean(),
+            Reintegration.find({ facility: facilityId }).lean(),
+            Transaction.find({ facility: facilityId }).lean(),
+            HospitalVisit.find({ facility: facilityId }).lean(),
+            Mastersheet.find({ facility: facilityId }).lean(),
+        ]);
+
+        const workbook = new ExcelJS.Workbook();
+
+        // Helper to add a worksheet from data
+        function addSheet(name, data) {
+            if (data.length === 0) {
+                workbook.addWorksheet(name);
+                return;
+            }
+            const worksheet = workbook.addWorksheet(name);
+            worksheet.columns = Object.keys(data[0]).map(key => ({ header: key, key }));
+            data.forEach(row => worksheet.addRow(row));
+        }
+
+        addSheet('AwarenessMeetings', awareness);
+        addSheet('Outreach', outreach);
+        addSheet('Reintegration', reintegration);
+        addSheet('Transactions', transactions);
+        addSheet('HospitalVisits', hospitalVisits);
+        addSheet('Mastersheet', mastersheet);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=facility_${facilityId}_data.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error('Error exporting facility data:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data.' });
+    }
+});
+
+// Export all forms data for all facilities as Excel
+router.get('/export/all-facilities', protect, async (req, res) => {
+    try {
+        // Fetch all forms for all facilities
+        const [awareness, outreach, reintegration, transactions, hospitalVisits, mastersheet] = await Promise.all([
+            AwarenessMeeting.find({}).lean(),
+            Outreach.find({}).lean(),
+            Reintegration.find({}).lean(),
+            Transaction.find({}).lean(),
+            HospitalVisit.find({}).lean(),
+            Mastersheet.find({}).lean(),
+        ]);
+
+        const workbook = new ExcelJS.Workbook();
+
+        // Helper to add a worksheet from data
+        function addSheet(name, data) {
+            if (data.length === 0) {
+                workbook.addWorksheet(name);
+                return;
+            }
+            const worksheet = workbook.addWorksheet(name);
+            worksheet.columns = Object.keys(data[0]).map(key => ({ header: key, key }));
+            data.forEach(row => worksheet.addRow(row));
+        }
+
+        addSheet('AwarenessMeetings', awareness);
+        addSheet('Outreach', outreach);
+        addSheet('Reintegration', reintegration);
+        addSheet('Transactions', transactions);
+        addSheet('HospitalVisits', hospitalVisits);
+        addSheet('Mastersheet', mastersheet);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=all_facilities_data.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error('Error exporting all facilities data:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data.' });
+    }
+});
+
+// Export all forms data filled by the current user as Excel
+router.get('/export/user-forms', protect, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        // Fetch all forms created by the user
+        const [awareness, outreach, reintegration, transactions, hospitalVisits, mastersheet] = await Promise.all([
+            AwarenessMeeting.find({ createdBy: userId }).lean(),
+            Outreach.find({ createdBy: userId }).lean(),
+            Reintegration.find({ createdBy: userId }).lean(),
+            Transaction.find({ createdBy: userId }).lean(),
+            HospitalVisit.find({ createdBy: userId }).lean(),
+            Mastersheet.find({ createdBy: userId }).lean(),
+        ]);
+
+        const workbook = new ExcelJS.Workbook();
+
+        // Helper to add a worksheet from data
+        function addSheet(name, data) {
+            if (data.length === 0) {
+                workbook.addWorksheet(name);
+                return;
+            }
+            const worksheet = workbook.addWorksheet(name);
+            worksheet.columns = Object.keys(data[0]).map(key => ({ header: key, key }));
+            data.forEach(row => worksheet.addRow(row));
+        }
+
+        addSheet('AwarenessMeetings', awareness);
+        addSheet('Outreach', outreach);
+        addSheet('Reintegration', reintegration);
+        addSheet('Transactions', transactions);
+        addSheet('HospitalVisits', hospitalVisits);
+        addSheet('Mastersheet', mastersheet);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=user_forms_data.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error('Error exporting user forms data:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data.' });
     }
 });
 

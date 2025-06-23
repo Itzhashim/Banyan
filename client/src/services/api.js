@@ -46,4 +46,28 @@ export const mastersheetService = {
     getForms: (facility) => api.get(`/forms/mastersheet${facility ? `?facility=${facility}` : ''}`),
     updateForm: (id, data) => api.put(`/forms/mastersheet/${id}`, data),
     deleteForm: (id) => api.delete(`/forms/mastersheet/${id}`)
+};
+
+// Export facility data as Excel
+export const exportFacilityData = async (facilityId) => {
+    const response = await api.get(`/forms/export/facility/${facilityId}`, {
+        responseType: 'blob',
+    });
+    return response;
+};
+
+// Export all facilities data as Excel
+export const exportAllFacilitiesData = async () => {
+    const response = await api.get('/forms/export/all-facilities', {
+        responseType: 'blob',
+    });
+    return response;
+};
+
+// Export current user's forms data as Excel
+export const exportUserFormsData = async () => {
+    const response = await api.get('/forms/export/user-forms', {
+        responseType: 'blob',
+    });
+    return response;
 }; 

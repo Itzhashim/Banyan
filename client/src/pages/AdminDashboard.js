@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FACILITIES, getFacilityDisplayName } from '../constants/facilities';
 import '../styles/admin-dashboard.css';
+import { exportFacilityData, exportAllFacilitiesData } from '../services/api';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
@@ -19,6 +20,37 @@ const AdminDashboard = () => {
 
     const handleFormClick = (formType) => {
         navigate(`/admin/forms/${formType}?facility=${selectedFacility}`);
+    };
+
+    const handleDownloadExcel = async () => {
+        if (!selectedFacility) return;
+        try {
+            const response = await exportFacilityData(selectedFacility);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${selectedFacility}_facility_data.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            alert('Failed to download Excel file.');
+        }
+    };
+
+    const handleDownloadAllExcel = async () => {
+        try {
+            const response = await exportAllFacilitiesData();
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `all_facilities_data.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            alert('Failed to download Excel file.');
+        }
     };
 
     const forms = [
@@ -42,6 +74,9 @@ const AdminDashboard = () => {
                         Logout
                     </button>
                 </div>
+                <button onClick={handleDownloadAllExcel} className="download-excel-button">
+                    Download All Facilities as Excel
+                </button>
             </div>
 
             <div className="facilities-grid">
@@ -59,6 +94,9 @@ const AdminDashboard = () => {
             {selectedFacility && (
                 <div className="facility-dashboard">
                     <h2>{getFacilityDisplayName(selectedFacility)} Facility Forms</h2>
+                    <button onClick={handleDownloadExcel} className="download-excel-button">
+                        Download as Excel
+                    </button>
                     <div className="forms-grid">
                         {forms.map((form, index) => (
                             <button 

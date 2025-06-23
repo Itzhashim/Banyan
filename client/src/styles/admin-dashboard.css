@@ -103,4 +103,20 @@
     margin: 0;
     color: #6c757d;
     font-size: 0.9rem;
+}
+
+.download-excel-button {
+    margin-bottom: 16px;
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.download-excel-button:hover {
+    background-color: #388e3c;
 } 
