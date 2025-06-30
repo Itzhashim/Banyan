@@ -1,6 +1,6 @@
 const { google } = require('googleapis');
-const path = require('path');
-const key = require(path.join(__dirname, '../../credentials/banyan-463814-492357145694.json'));
+
+const key = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
 
 const auth = new google.auth.GoogleAuth({
   credentials: key,
@@ -23,4 +23,4 @@ async function updateSheet(data, sheetName = 'Sheet1') {
   console.log(`Sheet updated: ${sheetName}`);
 }
 
-module.exports = { updateSheet }; 
+module.exports = { updateSheet };
