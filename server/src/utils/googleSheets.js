@@ -1,6 +1,10 @@
 const { google } = require('googleapis');
 
-const key = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+let key = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+// Ensure private_key is properly formatted for Node/OpenSSL
+if (key.private_key && key.private_key.includes('\\n')) {
+  key.private_key = key.private_key.replace(/\\n/g, '\n');
+}
 
 const auth = new google.auth.GoogleAuth({
   credentials: key,
